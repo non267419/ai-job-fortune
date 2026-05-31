@@ -1,25 +1,27 @@
-const STORAGE_KEY = "ai-job-fortunes-v2";
-const OLD_STORAGE_KEY = "ai-job-fortunes-v1";
+const STORAGE_KEY = "ai-fortunes-v3";
+const OLD_STORAGE_KEYS = ["ai-job-fortunes-v1", "ai-job-fortunes-v2"];
 const TTL_MS = 60 * 60 * 1000;
-const MAX_SHARE_LENGTH = 16000;
+const MAX_SHARE_LENGTH = 22000;
+const TYPE_COUNT = 4;
+const QUESTIONS_PER_TYPE = 2;
 
 const SAMPLE_FORTUNES = [
   {
     id: "sample-animal",
-    title: "どうぶつお仕事占い",
+    title: "どうぶつタイプ占い",
     nickname: "見本",
     sample: true,
-    questions: [
-      "みんなをまとめるのがすき？",
-      "新しいあそびを考えるのがすき？",
-      "こまっている人を手伝いたい？",
-      "何かを作るのがすき？"
-    ],
+    questions: makeQuestions([
+      ["みんなをまとめるのがすき？", "先に手をあげることが多い？"],
+      ["新しいあそびを考えるのがすき？", "ふしぎなことを調べたくなる？"],
+      ["こまっている人を手伝いたい？", "友達の気持ちに気づきやすい？"],
+      ["何かを作るのがすき？", "こつこつ仕上げるのがすき？"]
+    ]),
     results: [
-      { typeName: "ライオンタイプ", description: "前に立って、みんなを元気にできるタイプ。", jobs: "先生、店長、キャプテン" },
-      { typeName: "きつねタイプ", description: "ひらめきが多く、新しいことを考えるのが得意。", jobs: "発明家、デザイナー、ゲーム作家" },
-      { typeName: "いぬタイプ", description: "人の気持ちに気づいて、やさしく助けられるタイプ。", jobs: "看護師、保育士、カウンセラー" },
-      { typeName: "ビーバータイプ", description: "手を動かして、形にするのが得意なタイプ。", jobs: "大工、料理人、エンジニア" }
+      { typeName: "ライオンタイプ", description: "前に立って、みんなを元気にできるタイプ。", recommendations: "リーダー、司会、チームのまとめ役" },
+      { typeName: "きつねタイプ", description: "ひらめきが多く、新しいことを考えるのが得意。", recommendations: "発明、デザイン、ゲーム作り" },
+      { typeName: "いぬタイプ", description: "人の気持ちに気づいて、やさしく助けられるタイプ。", recommendations: "相談、サポート、見守り役" },
+      { typeName: "ビーバータイプ", description: "手を動かして、形にするのが得意なタイプ。", recommendations: "工作、料理、プログラミング" }
     ]
   },
   {
@@ -27,17 +29,17 @@ const SAMPLE_FORTUNES = [
     title: "うちゅうチーム占い",
     nickname: "見本",
     sample: true,
-    questions: [
-      "チームの作戦を考えるのがすき？",
-      "見たことがないものを見つけたい？",
-      "友達がこまったら声をかける？",
-      "道具やロボットを作ってみたい？"
-    ],
+    questions: makeQuestions([
+      ["チームの作戦を考えるのがすき？", "みんなに声をかけることが多い？"],
+      ["見たことがないものを見つけたい？", "なぜ？と考えることが多い？"],
+      ["友達がこまったら声をかける？", "チームの空気をよくしたい？"],
+      ["道具やロボットを作ってみたい？", "こわれたものを直してみたい？"]
+    ]),
     results: [
-      { typeName: "船長タイプ", description: "みんなの進む道を決めるのが得意。", jobs: "パイロット、監督、プロジェクトリーダー" },
-      { typeName: "探検家タイプ", description: "知らないことを調べるのが得意。", jobs: "研究者、記者、宇宙飛行士" },
-      { typeName: "サポートタイプ", description: "チームが安心できるように動けるタイプ。", jobs: "医師、整備士、相談員" },
-      { typeName: "メカニックタイプ", description: "しくみを考えて直したり作ったりできるタイプ。", jobs: "エンジニア、整備士、プログラマー" }
+      { typeName: "船長タイプ", description: "進む道を決めて、チームを動かせるタイプ。", recommendations: "作戦係、発表係、リーダー役" },
+      { typeName: "探検家タイプ", description: "知らないことを見つけて調べるのが得意。", recommendations: "研究、取材、アイデア出し" },
+      { typeName: "サポートタイプ", description: "チームが安心できるように動けるタイプ。", recommendations: "応援、手伝い、相談係" },
+      { typeName: "メカニックタイプ", description: "しくみを考えて、作ったり直したりできるタイプ。", recommendations: "工作、機械、パソコン活動" }
     ]
   },
   {
@@ -45,17 +47,17 @@ const SAMPLE_FORTUNES = [
     title: "まほう学校占い",
     nickname: "見本",
     sample: true,
-    questions: [
-      "みんなの前で発表するのがすき？",
-      "ふしぎなアイデアを考えるのがすき？",
-      "友達のいいところを見つけられる？",
-      "こつこつ練習するのがすき？"
-    ],
+    questions: makeQuestions([
+      ["みんなの前で発表するのがすき？", "大きな声であいさつできる？"],
+      ["ふしぎなアイデアを考えるのがすき？", "ちがうやり方をためしたくなる？"],
+      ["友達のいいところを見つけられる？", "だれかをはげましたくなる？"],
+      ["こつこつ練習するのがすき？", "作品を最後まで作りたい？"]
+    ]),
     results: [
-      { typeName: "光のまほうタイプ", description: "明るい声で、まわりをひっぱれるタイプ。", jobs: "アナウンサー、先生、リーダー" },
-      { typeName: "ひらめきまほうタイプ", description: "おもしろい考えを出すのが得意。", jobs: "作家、漫画家、企画する人" },
-      { typeName: "いやしまほうタイプ", description: "人を安心させる力があるタイプ。", jobs: "保育士、看護師、福祉の仕事" },
-      { typeName: "ものづくりまほうタイプ", description: "練習して、すてきな作品を作れるタイプ。", jobs: "職人、パティシエ、建築士" }
+      { typeName: "光のまほうタイプ", description: "明るい声で、まわりをひっぱれるタイプ。", recommendations: "発表、案内、イベント係" },
+      { typeName: "ひらめきまほうタイプ", description: "おもしろい考えを出すのが得意。", recommendations: "物語、絵、企画" },
+      { typeName: "いやしまほうタイプ", description: "人を安心させる力があるタイプ。", recommendations: "聞き役、手伝い、やさしい係" },
+      { typeName: "ものづくりまほうタイプ", description: "練習して、すてきな作品を作れるタイプ。", recommendations: "工作、料理、ものづくり" }
     ]
   }
 ];
@@ -73,6 +75,12 @@ const el = (tag, className, text) => {
   return node;
 };
 
+function makeQuestions(groups) {
+  return groups.flatMap((group, typeIndex) =>
+    group.map((text) => ({ text, typeIndex }))
+  );
+}
+
 function init() {
   buildInputs();
   loadFortunes();
@@ -88,13 +96,17 @@ function buildInputs() {
   const typeWrap = $("#typeInputs");
   typeWrap.textContent = "";
 
-  for (let index = 0; index < 4; index += 1) {
-    const card = el("div", "type-card");
+  for (let index = 0; index < TYPE_COUNT; index += 1) {
+    const card = el("div", `type-card type-card-${index}`);
     card.appendChild(el("h3", "", `タイプ ${index + 1}`));
     card.appendChild(makeInput("タイプ名", `typeName${index}`, "リーダータイプ", 20));
     card.appendChild(makeTextarea("どんなタイプ？", `description${index}`, "みんなをひっぱるのが得意。", 80));
-    card.appendChild(makeInput("向いている仕事", `jobs${index}`, "先生、店長、キャプテン", 40));
-    card.appendChild(makeInput("このタイプのしつもん", `question${index}`, "みんなをまとめるのがすき？", 60));
+    card.appendChild(makeInput("おすすめ", `recommendations${index}`, "遊び、係、活動など", 40));
+
+    const questionBox = el("div", "type-questions");
+    questionBox.appendChild(makeInput("しつもん 1", `question${index}-0`, "みんなをまとめるのがすき？", 60));
+    questionBox.appendChild(makeInput("しつもん 2", `question${index}-1`, "前に出て話すのがすき？", 60));
+    card.appendChild(questionBox);
     typeWrap.appendChild(card);
   }
 }
@@ -151,15 +163,18 @@ function setTab(tab) {
 function readForm() {
   const now = Date.now();
   const editingId = $("#editingId").value;
-  const questions = [];
+  const questionGroups = [];
   const results = [];
 
-  for (let index = 0; index < 4; index += 1) {
-    questions.push(clean($(`#question${index}`).value));
+  for (let index = 0; index < TYPE_COUNT; index += 1) {
+    questionGroups.push([
+      clean($(`#question${index}-0`).value),
+      clean($(`#question${index}-1`).value),
+    ]);
     results.push({
       typeName: clean($(`#typeName${index}`).value),
       description: clean($(`#description${index}`).value),
-      jobs: clean($(`#jobs${index}`).value),
+      recommendations: clean($(`#recommendations${index}`).value),
     });
   }
 
@@ -169,7 +184,7 @@ function readForm() {
     nickname: clean($("#nickname").value) || "ななし",
     createdAt: now,
     expiresAt: now + TTL_MS,
-    questions,
+    questions: makeQuestions(questionGroups),
     results,
     scoring: "typePoints",
     source: "local",
@@ -180,9 +195,31 @@ function clean(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+function normalizeFortune(fortune) {
+  const normalized = { ...fortune };
+  normalized.questions = (fortune.questions || []).map((question, index) => {
+    if (typeof question === "string") {
+      return { text: question, typeIndex: index % TYPE_COUNT };
+    }
+    return {
+      text: clean(question.text),
+      typeIndex: Number.isInteger(question.typeIndex) ? question.typeIndex : index % TYPE_COUNT,
+    };
+  });
+  normalized.results = (fortune.results || []).map((result) => ({
+    typeName: clean(result.typeName),
+    description: clean(result.description),
+    recommendations: clean(result.recommendations || result.jobs),
+  }));
+  return normalized;
+}
+
 function validateFortune(fortune) {
   if (!fortune.title) return "タイトルを入れてね";
-  if (fortune.questions.some((question) => !question)) return "しつもんを4こ入れてね";
+  if (!Array.isArray(fortune.questions) || fortune.questions.length !== TYPE_COUNT * QUESTIONS_PER_TYPE) {
+    return "しつもんを8こ入れてね";
+  }
+  if (fortune.questions.some((question) => !question.text)) return "しつもんを8こ入れてね";
   if (fortune.results.some((result) => !result.typeName)) return "タイプ名を4つ入れてね";
   return "";
 }
@@ -223,16 +260,21 @@ function previewFortune() {
 function editFortune(id) {
   const fortune = state.fortunes.find((item) => item.id === id && item.source === "local");
   if (!fortune) return;
+  const normalized = normalizeFortune(fortune);
 
-  $("#editingId").value = fortune.id;
-  $("#title").value = fortune.title;
-  $("#nickname").value = fortune.nickname === "ななし" ? "" : fortune.nickname;
-  fortune.results.forEach((result, index) => {
+  $("#editingId").value = normalized.id;
+  $("#title").value = normalized.title;
+  $("#nickname").value = normalized.nickname === "ななし" ? "" : normalized.nickname;
+  normalized.results.forEach((result, index) => {
     $(`#typeName${index}`).value = result.typeName || "";
     $(`#description${index}`).value = result.description || "";
-    $(`#jobs${index}`).value = result.jobs || "";
-    $(`#question${index}`).value = fortune.questions[index] || "";
+    $(`#recommendations${index}`).value = result.recommendations || "";
   });
+  for (let typeIndex = 0; typeIndex < TYPE_COUNT; typeIndex += 1) {
+    const questions = normalized.questions.filter((question) => question.typeIndex === typeIndex);
+    $(`#question${typeIndex}-0`).value = questions[0]?.text || "";
+    $(`#question${typeIndex}-1`).value = questions[1]?.text || "";
+  }
   $("#saveBtn").textContent = "なおして入れる";
   $("#cancelEditBtn").hidden = false;
   setTab("create");
@@ -247,11 +289,13 @@ function resetForm(clearValues = true) {
 }
 
 function startQuiz(fortune, isPreview = false) {
+  const normalized = normalizeFortune(fortune);
   state.quiz = {
-    fortune,
+    fortune: normalized,
     isPreview,
     index: 0,
-    scores: [0, 0, 0, 0],
+    scores: Array(TYPE_COUNT).fill(0),
+    totalYes: 0,
   };
   $("#createPanel").classList.remove("active");
   $("#playPanel").classList.remove("active");
@@ -270,9 +314,10 @@ function renderQuiz() {
     return;
   }
 
+  const question = quiz.fortune.questions[quiz.index];
   const card = el("div", "quiz-card");
   card.appendChild(el("div", "quiz-count", `しつもん ${quiz.index + 1} / ${quiz.fortune.questions.length}`));
-  card.appendChild(el("div", "quiz-question", quiz.fortune.questions[quiz.index]));
+  card.appendChild(el("div", "quiz-question", question.text));
 
   const row = el("div", "answer-row");
   const yes = el("button", "answer-btn yes", "はい");
@@ -287,9 +332,10 @@ function renderQuiz() {
 }
 
 function answerQuestion(isYes) {
+  const question = state.quiz.fortune.questions[state.quiz.index];
   if (isYes) {
-    const resultIndex = state.quiz.index % 4;
-    state.quiz.scores[resultIndex] += 1;
+    state.quiz.scores[question.typeIndex] += 1;
+    state.quiz.totalYes += 1;
   }
   state.quiz.index += 1;
   renderQuiz();
@@ -299,13 +345,22 @@ function renderResult() {
   const panel = $("#quizPanel");
   panel.textContent = "";
   const quiz = state.quiz;
-  const result = quiz.fortune.results[getWinningIndex(quiz.scores)];
+  const winningIndex = getWinningIndex(quiz.scores);
+  const result = quiz.fortune.results[winningIndex];
 
-  const card = el("div", "result-card");
-  card.appendChild(el("h2", "", "結果"));
-  card.appendChild(el("div", "result-type", result.typeName));
-  card.appendChild(el("p", "", result.description || "すてきなところがたくさんあるタイプ。"));
-  card.appendChild(el("p", "", `向いている仕事: ${result.jobs || "いろいろな仕事"}`));
+  const card = el("div", `result-card result-color-${winningIndex}`);
+  const visual = el("div", "result-visual");
+  visual.appendChild(el("div", "result-mark", String(winningIndex + 1)));
+  const headline = el("div");
+  headline.appendChild(el("h2", "", "結果"));
+  headline.appendChild(el("div", "result-type", result.typeName));
+  visual.appendChild(headline);
+  card.appendChild(visual);
+
+  card.appendChild(el("p", "result-description", result.description || "すてきなところがたくさんあるタイプ。"));
+  card.appendChild(el("p", "result-recommend", `おすすめ: ${result.recommendations || "いろいろなこと"}`));
+  card.appendChild(el("div", "total-score", `合計 ${quiz.totalYes}点 / ${quiz.fortune.questions.length}点`));
+  card.appendChild(renderScoreBars(quiz));
 
   const actions = el("div", "actions");
   const again = el("button", "secondary-btn", "もう一回");
@@ -317,6 +372,22 @@ function renderResult() {
   actions.append(again, back);
   card.appendChild(actions);
   panel.appendChild(card);
+}
+
+function renderScoreBars(quiz) {
+  const wrap = el("div", "score-board");
+  quiz.fortune.results.forEach((result, index) => {
+    const row = el("div", "score-row");
+    const label = el("div", "score-label", result.typeName || `タイプ${index + 1}`);
+    const track = el("div", "score-track");
+    const bar = el("div", `score-fill score-fill-${index}`);
+    bar.style.width = `${(quiz.scores[index] / QUESTIONS_PER_TYPE) * 100}%`;
+    track.appendChild(bar);
+    const count = el("div", "score-count", `${quiz.scores[index]}点`);
+    row.append(label, track, count);
+    wrap.appendChild(row);
+  });
+  return wrap;
 }
 
 function getWinningIndex(scores) {
@@ -398,11 +469,11 @@ function minutesLeft(expiresAt) {
 function loadFortunes() {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    state.fortunes = raw ? JSON.parse(raw) : [];
+    state.fortunes = raw ? JSON.parse(raw).map(normalizeFortune) : [];
   } catch {
     state.fortunes = [];
   }
-  sessionStorage.removeItem(OLD_STORAGE_KEY);
+  OLD_STORAGE_KEYS.forEach((key) => sessionStorage.removeItem(key));
   pruneExpired();
 }
 
@@ -434,7 +505,7 @@ function clearAll() {
 }
 
 function showShare(fortune) {
-  $("#shareCode").value = encodeShare(fortune);
+  $("#shareCode").value = encodeShare(normalizeFortune(fortune));
   $("#shareDialog").showModal();
 }
 
@@ -471,7 +542,7 @@ function importShareCode() {
   }
 
   try {
-    const fortune = decodeShare(code);
+    const fortune = normalizeFortune(decodeShare(code));
     const error = validateImportedFortune(fortune);
     if (error) {
       showToast(error);
@@ -492,8 +563,6 @@ function importShareCode() {
 function validateImportedFortune(fortune) {
   if (!fortune || typeof fortune !== "object") return "コードを読みこめないよ";
   if (Number(fortune.expiresAt) <= Date.now()) return "この占いは時間がすぎたよ";
-  if (!Array.isArray(fortune.questions) || fortune.questions.length !== 4) return "コードを読みこめないよ";
-  if (!Array.isArray(fortune.results) || fortune.results.length !== 4) return "コードを読みこめないよ";
   return validateFortune(fortune);
 }
 
