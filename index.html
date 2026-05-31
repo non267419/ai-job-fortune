@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AIお仕事占いメーカー</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">今日だけつかう</p>
+        <h1>AIお仕事占い</h1>
+      </div>
+      <div class="timer-pill" id="totalCount">0こ</div>
+    </header>
+
+    <nav class="tabs" aria-label="メニュー">
+      <button class="tab active" type="button" data-tab="create">作る</button>
+      <button class="tab" type="button" data-tab="play">遊ぶ</button>
+    </nav>
+
+    <main>
+      <section class="notice" aria-label="やくそく">
+        本名や学校名は入れないでね。ニックネームで作ろう。
+      </section>
+
+      <section id="createPanel" class="panel active" aria-labelledby="createTitle">
+        <form id="fortuneForm" autocomplete="off">
+          <div class="step-block">
+            <div class="step-head">
+              <span class="step-num">1</span>
+              <h2 id="createTitle">どんな占い？</h2>
+            </div>
+            <label>
+              <span>タイトル</span>
+              <input id="title" maxlength="30" required placeholder="どうぶつお仕事占い">
+            </label>
+            <label>
+              <span>ニックネーム</span>
+              <input id="nickname" maxlength="12" placeholder="ななし">
+            </label>
+          </div>
+
+          <div class="step-block">
+            <div class="step-head">
+              <span class="step-num">2</span>
+              <h2>タイプを4つ</h2>
+            </div>
+            <div class="type-grid" id="typeInputs"></div>
+          </div>
+
+          <div class="step-block">
+            <div class="step-head">
+              <span class="step-num">3</span>
+              <h2>しつもんを5こ</h2>
+            </div>
+            <div class="question-list" id="questionInputs"></div>
+          </div>
+
+          <div class="actions">
+            <button class="primary-btn" type="button" id="previewBtn">ためしてみる</button>
+            <button class="secondary-btn" type="submit">今日の占いに入れる</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="playPanel" class="panel" aria-labelledby="playTitle">
+        <div class="step-block compact">
+          <div class="step-head">
+            <span class="step-num">+</span>
+            <h2>友達の占い</h2>
+          </div>
+          <textarea id="shareInput" rows="3" placeholder="共有コードをここに入れる"></textarea>
+          <button class="secondary-btn full" type="button" id="importBtn">読みこむ</button>
+        </div>
+
+        <div class="list-head">
+          <h2 id="playTitle">今日の占い</h2>
+          <button class="text-btn" type="button" id="clearAllBtn">ぜんぶ消す</button>
+        </div>
+        <div id="fortuneList" class="fortune-list"></div>
+      </section>
+
+      <section id="quizPanel" class="panel quiz-panel" aria-live="polite"></section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <dialog id="shareDialog">
+      <form method="dialog" class="dialog-body">
+        <h2>友達に見せる</h2>
+        <p>このコードを友達の画面で読みこむ。</p>
+        <textarea id="shareCode" rows="6" readonly></textarea>
+        <div class="actions">
+          <button class="secondary-btn" type="button" id="copyBtn">コピー</button>
+          <button class="primary-btn" value="close">とじる</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
