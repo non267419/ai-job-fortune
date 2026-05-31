@@ -1,10 +1,67 @@
-const STORAGE_KEY = "ai-job-fortunes-v1";
+const STORAGE_KEY = "ai-job-fortunes-v2";
+const OLD_STORAGE_KEY = "ai-job-fortunes-v1";
 const TTL_MS = 60 * 60 * 1000;
-const MAX_SHARE_LENGTH = 12000;
+const MAX_SHARE_LENGTH = 16000;
+
+const SAMPLE_FORTUNES = [
+  {
+    id: "sample-animal",
+    title: "どうぶつお仕事占い",
+    nickname: "見本",
+    sample: true,
+    questions: [
+      "みんなをまとめるのがすき？",
+      "新しいあそびを考えるのがすき？",
+      "こまっている人を手伝いたい？",
+      "何かを作るのがすき？"
+    ],
+    results: [
+      { typeName: "ライオンタイプ", description: "前に立って、みんなを元気にできるタイプ。", jobs: "先生、店長、キャプテン" },
+      { typeName: "きつねタイプ", description: "ひらめきが多く、新しいことを考えるのが得意。", jobs: "発明家、デザイナー、ゲーム作家" },
+      { typeName: "いぬタイプ", description: "人の気持ちに気づいて、やさしく助けられるタイプ。", jobs: "看護師、保育士、カウンセラー" },
+      { typeName: "ビーバータイプ", description: "手を動かして、形にするのが得意なタイプ。", jobs: "大工、料理人、エンジニア" }
+    ]
+  },
+  {
+    id: "sample-space",
+    title: "うちゅうチーム占い",
+    nickname: "見本",
+    sample: true,
+    questions: [
+      "チームの作戦を考えるのがすき？",
+      "見たことがないものを見つけたい？",
+      "友達がこまったら声をかける？",
+      "道具やロボットを作ってみたい？"
+    ],
+    results: [
+      { typeName: "船長タイプ", description: "みんなの進む道を決めるのが得意。", jobs: "パイロット、監督、プロジェクトリーダー" },
+      { typeName: "探検家タイプ", description: "知らないことを調べるのが得意。", jobs: "研究者、記者、宇宙飛行士" },
+      { typeName: "サポートタイプ", description: "チームが安心できるように動けるタイプ。", jobs: "医師、整備士、相談員" },
+      { typeName: "メカニックタイプ", description: "しくみを考えて直したり作ったりできるタイプ。", jobs: "エンジニア、整備士、プログラマー" }
+    ]
+  },
+  {
+    id: "sample-magic",
+    title: "まほう学校占い",
+    nickname: "見本",
+    sample: true,
+    questions: [
+      "みんなの前で発表するのがすき？",
+      "ふしぎなアイデアを考えるのがすき？",
+      "友達のいいところを見つけられる？",
+      "こつこつ練習するのがすき？"
+    ],
+    results: [
+      { typeName: "光のまほうタイプ", description: "明るい声で、まわりをひっぱれるタイプ。", jobs: "アナウンサー、先生、リーダー" },
+      { typeName: "ひらめきまほうタイプ", description: "おもしろい考えを出すのが得意。", jobs: "作家、漫画家、企画する人" },
+      { typeName: "いやしまほうタイプ", description: "人を安心させる力があるタイプ。", jobs: "保育士、看護師、福祉の仕事" },
+      { typeName: "ものづくりまほうタイプ", description: "練習して、すてきな作品を作れるタイプ。", jobs: "職人、パティシエ、建築士" }
+    ]
+  }
+];
 
 const state = {
   fortunes: [],
-  currentTab: "create",
   quiz: null,
 };
 
@@ -29,23 +86,20 @@ function init() {
 
 function buildInputs() {
   const typeWrap = $("#typeInputs");
-  const questionWrap = $("#questionInputs");
+  typeWrap.textContent = "";
 
   for (let index = 0; index < 4; index += 1) {
     const card = el("div", "type-card");
     card.appendChild(el("h3", "", `タイプ ${index + 1}`));
-    card.appendChild(makeLabel("タイプ名", `typeName${index}`, "リーダータイプ", 20));
+    card.appendChild(makeInput("タイプ名", `typeName${index}`, "リーダータイプ", 20));
     card.appendChild(makeTextarea("どんなタイプ？", `description${index}`, "みんなをひっぱるのが得意。", 80));
-    card.appendChild(makeLabel("向いている仕事", `jobs${index}`, "先生、店長、キャプテン", 40));
+    card.appendChild(makeInput("向いている仕事", `jobs${index}`, "先生、店長、キャプテン", 40));
+    card.appendChild(makeInput("このタイプのしつもん", `question${index}`, "みんなをまとめるのがすき？", 60));
     typeWrap.appendChild(card);
-  }
-
-  for (let index = 0; index < 5; index += 1) {
-    questionWrap.appendChild(makeLabel(`しつもん ${index + 1}`, `question${index}`, "人を手伝うのがすき？", 60));
   }
 }
 
-function makeLabel(text, id, placeholder, maxLength) {
+function makeInput(text, id, placeholder, maxLength) {
   const label = el("label");
   label.appendChild(el("span", "", text));
   const input = el("input");
@@ -75,17 +129,17 @@ function bindEvents() {
 
   $("#fortuneForm").addEventListener("submit", (event) => {
     event.preventDefault();
-    addFortune();
+    saveFormFortune();
   });
 
   $("#previewBtn").addEventListener("click", previewFortune);
   $("#importBtn").addEventListener("click", importShareCode);
   $("#clearAllBtn").addEventListener("click", clearAll);
   $("#copyBtn").addEventListener("click", copyShareCode);
+  $("#cancelEditBtn").addEventListener("click", resetForm);
 }
 
 function setTab(tab) {
-  state.currentTab = tab;
   $("#createPanel").classList.toggle("active", tab === "create");
   $("#playPanel").classList.toggle("active", tab === "play");
   $("#quizPanel").classList.remove("active");
@@ -95,16 +149,13 @@ function setTab(tab) {
 }
 
 function readForm() {
-  const title = clean($("#title").value);
-  const nickname = clean($("#nickname").value) || "ななし";
+  const now = Date.now();
+  const editingId = $("#editingId").value;
   const questions = [];
   const results = [];
 
-  for (let index = 0; index < 5; index += 1) {
-    questions.push(clean($(`#question${index}`).value));
-  }
-
   for (let index = 0; index < 4; index += 1) {
+    questions.push(clean($(`#question${index}`).value));
     results.push({
       typeName: clean($(`#typeName${index}`).value),
       description: clean($(`#description${index}`).value),
@@ -113,13 +164,15 @@ function readForm() {
   }
 
   return {
-    id: `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    title,
-    nickname,
-    createdAt: Date.now(),
-    expiresAt: Date.now() + TTL_MS,
+    id: editingId || `local-${now}-${Math.random().toString(16).slice(2)}`,
+    title: clean($("#title").value),
+    nickname: clean($("#nickname").value) || "ななし",
+    createdAt: now,
+    expiresAt: now + TTL_MS,
     questions,
     results,
+    scoring: "typePoints",
+    source: "local",
   };
 }
 
@@ -129,12 +182,12 @@ function clean(value) {
 
 function validateFortune(fortune) {
   if (!fortune.title) return "タイトルを入れてね";
-  if (fortune.questions.some((question) => !question)) return "質問を5こ入れてね";
+  if (fortune.questions.some((question) => !question)) return "しつもんを4こ入れてね";
   if (fortune.results.some((result) => !result.typeName)) return "タイプ名を4つ入れてね";
   return "";
 }
 
-function addFortune() {
+function saveFormFortune() {
   const fortune = readForm();
   const error = validateFortune(fortune);
   if (error) {
@@ -142,11 +195,19 @@ function addFortune() {
     return;
   }
 
-  state.fortunes.unshift(fortune);
+  const editIndex = state.fortunes.findIndex((item) => item.id === fortune.id && item.source === "local");
+  if (editIndex >= 0) {
+    state.fortunes[editIndex] = fortune;
+    showToast("なおしたよ");
+  } else {
+    state.fortunes.unshift(fortune);
+    showToast("今日の占いに入れたよ");
+  }
+
   saveFortunes();
+  resetForm(false);
   renderAll();
   setTab("play");
-  showToast("今日の占いに入れたよ");
 }
 
 function previewFortune() {
@@ -156,8 +217,33 @@ function previewFortune() {
     showToast(error);
     return;
   }
-
   startQuiz(fortune, true);
+}
+
+function editFortune(id) {
+  const fortune = state.fortunes.find((item) => item.id === id && item.source === "local");
+  if (!fortune) return;
+
+  $("#editingId").value = fortune.id;
+  $("#title").value = fortune.title;
+  $("#nickname").value = fortune.nickname === "ななし" ? "" : fortune.nickname;
+  fortune.results.forEach((result, index) => {
+    $(`#typeName${index}`).value = result.typeName || "";
+    $(`#description${index}`).value = result.description || "";
+    $(`#jobs${index}`).value = result.jobs || "";
+    $(`#question${index}`).value = fortune.questions[index] || "";
+  });
+  $("#saveBtn").textContent = "なおして入れる";
+  $("#cancelEditBtn").hidden = false;
+  setTab("create");
+  showToast("なおせるよ");
+}
+
+function resetForm(clearValues = true) {
+  if (clearValues) $("#fortuneForm").reset();
+  $("#editingId").value = "";
+  $("#saveBtn").textContent = "今日の占いに入れる";
+  $("#cancelEditBtn").hidden = true;
 }
 
 function startQuiz(fortune, isPreview = false) {
@@ -165,7 +251,7 @@ function startQuiz(fortune, isPreview = false) {
     fortune,
     isPreview,
     index: 0,
-    score: 0,
+    scores: [0, 0, 0, 0],
   };
   $("#createPanel").classList.remove("active");
   $("#playPanel").classList.remove("active");
@@ -176,7 +262,6 @@ function startQuiz(fortune, isPreview = false) {
 function renderQuiz() {
   const panel = $("#quizPanel");
   panel.textContent = "";
-
   const quiz = state.quiz;
   if (!quiz) return;
 
@@ -186,7 +271,7 @@ function renderQuiz() {
   }
 
   const card = el("div", "quiz-card");
-  card.appendChild(el("div", "quiz-count", `しつもん ${quiz.index + 1} / 5`));
+  card.appendChild(el("div", "quiz-count", `しつもん ${quiz.index + 1} / ${quiz.fortune.questions.length}`));
   card.appendChild(el("div", "quiz-question", quiz.fortune.questions[quiz.index]));
 
   const row = el("div", "answer-row");
@@ -194,15 +279,18 @@ function renderQuiz() {
   const no = el("button", "answer-btn no", "いいえ");
   yes.type = "button";
   no.type = "button";
-  yes.addEventListener("click", () => answerQuestion(1));
-  no.addEventListener("click", () => answerQuestion(0));
+  yes.addEventListener("click", () => answerQuestion(true));
+  no.addEventListener("click", () => answerQuestion(false));
   row.append(yes, no);
   card.appendChild(row);
   panel.appendChild(card);
 }
 
-function answerQuestion(point) {
-  state.quiz.score += point;
+function answerQuestion(isYes) {
+  if (isYes) {
+    const resultIndex = state.quiz.index % 4;
+    state.quiz.scores[resultIndex] += 1;
+  }
   state.quiz.index += 1;
   renderQuiz();
 }
@@ -211,7 +299,7 @@ function renderResult() {
   const panel = $("#quizPanel");
   panel.textContent = "";
   const quiz = state.quiz;
-  const result = getResult(quiz.fortune.results, quiz.score);
+  const result = quiz.fortune.results[getWinningIndex(quiz.scores)];
 
   const card = el("div", "result-card");
   card.appendChild(el("h2", "", "結果"));
@@ -231,17 +319,27 @@ function renderResult() {
   panel.appendChild(card);
 }
 
-function getResult(results, score) {
-  if (score <= 1) return results[0];
-  if (score === 2) return results[1];
-  if (score <= 4) return results[2];
-  return results[3];
+function getWinningIndex(scores) {
+  let best = 0;
+  for (let index = 1; index < scores.length; index += 1) {
+    if (scores[index] > scores[best]) best = index;
+  }
+  return best;
 }
 
 function renderAll() {
   pruneExpired();
   $("#totalCount").textContent = `${state.fortunes.length}こ`;
+  renderSampleList();
   renderFortuneList();
+}
+
+function renderSampleList() {
+  const list = $("#sampleList");
+  list.textContent = "";
+  SAMPLE_FORTUNES.forEach((fortune) => {
+    list.appendChild(createFortuneCard(fortune, "見本", false));
+  });
 }
 
 function renderFortuneList() {
@@ -249,31 +347,48 @@ function renderFortuneList() {
   list.textContent = "";
 
   if (!state.fortunes.length) {
-    list.appendChild(el("div", "empty", "まだ占いがないよ"));
+    list.appendChild(el("div", "empty", "作った占いはここに出るよ"));
     return;
   }
 
   state.fortunes.forEach((fortune) => {
-    const card = el("article", "fortune-card");
-    const info = el("div");
-    info.appendChild(el("p", "fortune-title", fortune.title));
-    info.appendChild(el("p", "fortune-meta", `${fortune.nickname}  あと${minutesLeft(fortune.expiresAt)}分`));
-
-    const actions = el("div", "mini-actions");
-    const play = el("button", "mini-btn play-btn", "やってみる");
-    const share = el("button", "mini-btn", "見せる");
-    const remove = el("button", "mini-btn", "消す");
-    play.type = "button";
-    share.type = "button";
-    remove.type = "button";
-    play.addEventListener("click", () => startQuiz(fortune));
-    share.addEventListener("click", () => showShare(fortune));
-    remove.addEventListener("click", () => removeFortune(fortune.id));
-    actions.append(play, share, remove);
-
-    card.append(info, actions);
-    list.appendChild(card);
+    list.appendChild(createFortuneCard(fortune, `あと${minutesLeft(fortune.expiresAt)}分`, true));
   });
+}
+
+function createFortuneCard(fortune, metaRight, canChange) {
+  const card = el("article", `fortune-card${fortune.sample ? " sample-card" : ""}`);
+  const info = el("div");
+  info.appendChild(el("p", "fortune-title", fortune.title));
+  info.appendChild(el("p", "fortune-meta", `${fortune.nickname}  ${metaRight}`));
+
+  const actions = el("div", "mini-actions");
+  const play = el("button", "mini-btn play-btn", "やってみる");
+  play.type = "button";
+  play.addEventListener("click", () => startQuiz(fortune));
+  actions.appendChild(play);
+
+  if (canChange) {
+    const share = el("button", "mini-btn", "見せる");
+    share.type = "button";
+    share.addEventListener("click", () => showShare(fortune));
+    actions.appendChild(share);
+
+    if (fortune.source === "local") {
+      const edit = el("button", "mini-btn", "なおす");
+      edit.type = "button";
+      edit.addEventListener("click", () => editFortune(fortune.id));
+      actions.appendChild(edit);
+    }
+
+    const remove = el("button", "mini-btn danger-mini", "消す");
+    remove.type = "button";
+    remove.addEventListener("click", () => removeFortune(fortune.id));
+    actions.appendChild(remove);
+  }
+
+  card.append(info, actions);
+  return card;
 }
 
 function minutesLeft(expiresAt) {
@@ -287,6 +402,7 @@ function loadFortunes() {
   } catch {
     state.fortunes = [];
   }
+  sessionStorage.removeItem(OLD_STORAGE_KEY);
   pruneExpired();
 }
 
@@ -311,6 +427,7 @@ function removeFortune(id) {
 
 function clearAll() {
   state.fortunes = [];
+  resetForm();
   saveFortunes();
   renderAll();
   showToast("ぜんぶ消したよ");
@@ -325,6 +442,7 @@ function encodeShare(fortune) {
   const payload = {
     ...fortune,
     id: `shared-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    source: "shared",
   };
   const json = JSON.stringify(payload);
   const bytes = new TextEncoder().encode(json);
@@ -360,6 +478,7 @@ function importShareCode() {
       return;
     }
     fortune.id = `imported-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    fortune.source = "shared";
     state.fortunes.unshift(fortune);
     saveFortunes();
     $("#shareInput").value = "";
@@ -373,7 +492,7 @@ function importShareCode() {
 function validateImportedFortune(fortune) {
   if (!fortune || typeof fortune !== "object") return "コードを読みこめないよ";
   if (Number(fortune.expiresAt) <= Date.now()) return "この占いは時間がすぎたよ";
-  if (!Array.isArray(fortune.questions) || fortune.questions.length !== 5) return "コードを読みこめないよ";
+  if (!Array.isArray(fortune.questions) || fortune.questions.length !== 4) return "コードを読みこめないよ";
   if (!Array.isArray(fortune.results) || fortune.results.length !== 4) return "コードを読みこめないよ";
   return validateFortune(fortune);
 }

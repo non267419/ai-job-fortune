@@ -16,8 +16,8 @@
     </header>
 
     <nav class="tabs" aria-label="メニュー">
-      <button class="tab active" type="button" data-tab="create">作る</button>
-      <button class="tab" type="button" data-tab="play">遊ぶ</button>
+      <button class="tab active" type="button" data-tab="play">遊ぶ</button>
+      <button class="tab" type="button" data-tab="create">作る</button>
     </nav>
 
     <main>
@@ -25,8 +25,30 @@
         本名や学校名は入れないでね。ニックネームで作ろう。
       </section>
 
-      <section id="createPanel" class="panel active" aria-labelledby="createTitle">
+      <section id="playPanel" class="panel active" aria-labelledby="playTitle">
+        <div class="step-block compact">
+          <div class="step-head">
+            <span class="step-num">+</span>
+            <h2>友達の占い</h2>
+          </div>
+          <textarea id="shareInput" rows="3" placeholder="共有コードをここに入れる"></textarea>
+          <button class="secondary-btn full" type="button" id="importBtn">読みこむ</button>
+        </div>
+
+        <h2 class="section-title">見本</h2>
+        <div id="sampleList" class="fortune-list"></div>
+
+        <div class="list-head">
+          <h2 id="playTitle">今日の占い</h2>
+          <button class="text-btn" type="button" id="clearAllBtn">ぜんぶ消す</button>
+        </div>
+        <div id="fortuneList" class="fortune-list"></div>
+      </section>
+
+      <section id="createPanel" class="panel" aria-labelledby="createTitle">
         <form id="fortuneForm" autocomplete="off">
+          <input type="hidden" id="editingId">
+
           <div class="step-block">
             <div class="step-head">
               <span class="step-num">1</span>
@@ -45,41 +67,17 @@
           <div class="step-block">
             <div class="step-head">
               <span class="step-num">2</span>
-              <h2>タイプを4つ</h2>
+              <h2>タイプとしつもん</h2>
             </div>
             <div class="type-grid" id="typeInputs"></div>
           </div>
 
-          <div class="step-block">
-            <div class="step-head">
-              <span class="step-num">3</span>
-              <h2>しつもんを5こ</h2>
-            </div>
-            <div class="question-list" id="questionInputs"></div>
-          </div>
-
-          <div class="actions">
+          <div class="actions sticky-actions">
             <button class="primary-btn" type="button" id="previewBtn">ためしてみる</button>
-            <button class="secondary-btn" type="submit">今日の占いに入れる</button>
+            <button class="secondary-btn" type="submit" id="saveBtn">今日の占いに入れる</button>
+            <button class="ghost-btn" type="button" id="cancelEditBtn" hidden>やめる</button>
           </div>
         </form>
-      </section>
-
-      <section id="playPanel" class="panel" aria-labelledby="playTitle">
-        <div class="step-block compact">
-          <div class="step-head">
-            <span class="step-num">+</span>
-            <h2>友達の占い</h2>
-          </div>
-          <textarea id="shareInput" rows="3" placeholder="共有コードをここに入れる"></textarea>
-          <button class="secondary-btn full" type="button" id="importBtn">読みこむ</button>
-        </div>
-
-        <div class="list-head">
-          <h2 id="playTitle">今日の占い</h2>
-          <button class="text-btn" type="button" id="clearAllBtn">ぜんぶ消す</button>
-        </div>
-        <div id="fortuneList" class="fortune-list"></div>
       </section>
 
       <section id="quizPanel" class="panel quiz-panel" aria-live="polite"></section>

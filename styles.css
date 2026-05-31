@@ -135,6 +135,10 @@ main {
   box-shadow: none;
 }
 
+.section-title {
+  margin: 18px 0 10px;
+}
+
 .step-head {
   display: flex;
   align-items: center;
@@ -195,6 +199,11 @@ textarea:focus {
   background: #f8fdff;
 }
 
+.sample-card {
+  border-color: #9bdcf5;
+  background: #f7fdff;
+}
+
 .type-card h3 {
   margin: 0 0 10px;
   font-size: 1.05rem;
@@ -212,14 +221,19 @@ textarea:focus {
 }
 
 .primary-btn,
-.secondary-btn {
+.secondary-btn,
+.ghost-btn {
   min-height: 54px;
-  border: 0;
   border-radius: 8px;
   padding: 12px 20px;
-  color: #fff;
   font-size: 1.1rem;
   font-weight: 900;
+}
+
+.primary-btn,
+.secondary-btn {
+  border: 0;
+  color: #fff;
 }
 
 .primary-btn {
@@ -228,6 +242,12 @@ textarea:focus {
 
 .secondary-btn {
   background: var(--green);
+}
+
+.ghost-btn {
+  border: 2px solid var(--line);
+  background: #fff;
+  color: var(--main-dark);
 }
 
 .primary-btn:disabled,
@@ -305,6 +325,10 @@ textarea:focus {
   background: var(--green);
   border-color: var(--green);
   color: #fff;
+}
+
+.danger-mini {
+  color: var(--danger);
 }
 
 .empty {
