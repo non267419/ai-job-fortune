@@ -518,4 +518,8 @@ function showToast(message) {
   }, 2200);
 }
 
-init();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init, { once: true });
+} else {
+  init();
+}
